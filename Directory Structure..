@@ -4,9 +4,10 @@ ab-testing-framework/
 ├── setup.py
 ├── LICENSE
 ├── .gitignore
-├── improved_ab_test.py  
+├── ab_test_analyzer.py  
 ├── data/
-│   └── data_generator.py
+│   ├──ab_test.csv
+│   └──countries_ab.csv
 ├── notebooks/
 │   └── ab_testing_example.ipynb
 ├── tests/
