@@ -1,0 +1,419 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# A/B Testing Analysis - Complete Example\n",
+    "\n",
+    "This notebook demonstrates how to use the A/B Testing Analysis Framework to analyze experiment results and generate business recommendations.\n",
+    "\n",
+    "## Table of Contents\n",
+    "1. [Setup and Data Loading](#setup)\n",
+    "2. [Data Exploration](#exploration)\n",
+    "3. [Statistical Analysis](#analysis)\n",
+    "4. [Results Visualization](#visualization)\n",
+    "5. [Business Recommendations](#recommendations)\n",
+    "6. [Key Takeaways](#takeaways)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1. Setup and Data Loading {#setup}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Import required libraries\n",
+    "import sys\n",
+    "import os\n",
+    "sys.path.append('../')\n",
+    "\n",
+    "from ab_test_analyzer import ABTestAnalyzer\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "\n",
+    "# Set up plotting\n",
+    "plt.style.use('seaborn-v0_8')\n",
+    "sns.set_palette(\"husl\")\n",
+    "%matplotlib inline\n",
+    "\n",
+    "print(\"Libraries imported successfully!\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Generate sample data if it doesn't exist\n",
+    "from data.data_generator import generate_sample_ab_test_data, save_sample_data\n",
+    "\n",
+    "if not os.path.exists('../data/sample_ab_test.csv'):\n",
+    "    print(\"Generating sample data...\")\n",
+    "    ab_test_df, countries_df = generate_sample_ab_test_data(n_users=50000)\n",
+    "    save_sample_data(ab_test_df, countries_df, \n",
+    "                     '../data/sample_ab_test.csv', \n",
+    "                     '../data/sample_countries.csv')\n",
+    "else:\n",
+    "    print(\"Sample data already exists!\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Initialize the A/B Test Analyzer\n",
+    "analyzer = ABTestAnalyzer(\"../data/sample_ab_test.csv\", \"../data/sample_countries.csv\")\n",
+    "\n",
+    "print(\"A/B Test Analyzer initialized successfully!\")\n",
+    "print(f\"Total records loaded: {len(analyzer.data):,}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Data Exploration {#exploration}\n",
+    "\n",
+    "Let's start by exploring the data to understand the experiment structure and identify any potential issues."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Display basic data info\n",
+    "print(\"Data Overview:\")\n",
+    "print(analyzer.data.info())\n",
+    "print(\"\\nFirst few rows:\")\n",
+    "analyzer.data.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Run exploratory data analysis\n",
+    "analyzer.exploratory_analysis()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Key Observations from EDA:\n",
+    "- Sample distribution across countries\n",
+    "- Treatment group balance\n",
+    "- Overall conversion rates\n",
+    "- Any data quality issues identified"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Statistical Analysis {#analysis}\n",
+    "\n",
+    "Now let's perform the statistical analysis to determine if there's a significant difference between treatments."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Power analysis\n",
+    "power = analyzer.power_analysis()\n",
+    "print(f\"\\nAchieved Statistical Power: {power:.3f}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Statistical tests\n",
+    "results = analyzer.statistical_tests()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Let's examine the results in detail\n",
+    "print(\"=== DETAILED RESULTS SUMMARY ===\\n\")\n",
+    "\n",
+    "# Overall results\n",
+    "overall = results['overall']\n",
+    "print(f\"OVERALL RESULTS:\")\n",
+    "print(f\"Control Rate: {overall['control_rate']:.4f}\")\n",
+    "print(f\"Treatment Rate: {overall['treatment_rate']:.4f}\")\n",
+    "print(f\"Absolute Effect: {overall['effect_size']:+.4f}\")\n",
+    "print(f\"Relative Effect: {overall['relative_effect']:+.2f}%\")\n",
+    "print(f\"P-value: {overall['p_value']:.6f}\")\n",
+    "print(f\"Significant: {'YES' if overall['significant'] else 'NO'}\")\n",
+    "print(f\"95% CI: [{overall['ci_low']:+.4f}, {overall['ci_high']:+.4f}]\")\n",
+    "\n",
+    "print(\"\\n\" + \"-\"*50)\n",
+    "\n",
+    "# Country-level results\n",
+    "countries = [k for k in results.keys() if k != 'overall']\n",
+    "print(f\"\\nCOUNTRY-LEVEL RESULTS:\")\n",
+    "for country in countries:\n",
+    "    country_result = results[country]\n",
+    "    print(f\"\\n{country}:\")\n",
+    "    print(f\"  Relative Effect: {country_result['relative_effect']:+.2f}%\")\n",
+    "    print(f\"  P-value: {country_result['p_value']:.6f}\")\n",
+    "    print(f\"  Bonferroni Significant: {'YES' if country_result['p_value_adjusted'] else 'NO'}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Results Visualization {#visualization}\n",
+    "\n",
+    "Let's create comprehensive visualizations to understand the results better."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create results visualization\n",
+    "analyzer.create_results_visualization(results)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Additional custom visualization - conversion funnel\n",
+    "fig, axes = plt.subplots(1, 2, figsize=(15, 6))\n",
+    "\n",
+    "# Conversion rates with error bars\n",
+    "summary_stats = analyzer.data.groupby('con_treat')['converted'].agg(['mean', 'sem', 'count'])\n",
+    "x_pos = [0, 1]\n",
+    "rates = summary_stats['mean'].values\n",
+    "errors = summary_stats['sem'].values\n",
+    "\n",
+    "bars = axes[0].bar(x_pos, rates, yerr=errors, capsize=5, \n",
+    "                   color=['#3498db', '#e74c3c'], alpha=0.8)\n",
+    "axes[0].set_title('Conversion Rates with Standard Error', fontsize=14, fontweight='bold')\n",
+    "axes[0].set_ylabel('Conversion Rate')\n",
+    "axes[0].set_xticks(x_pos)\n",
+    "axes[0].set_xticklabels(['Control', 'Treatment'])\n",
+    "\n",
+    "# Add value labels\n",
+    "for i, (rate, error) in enumerate(zip(rates, errors)):\n",
+    "    axes[0].text(i, rate + error + 0.001, f'{rate:.3f}\\n±{error:.3f}', \n",
+    "                ha='center', va='bottom', fontweight='bold')\n",
+    "\n",
+    "# Sample sizes\n",
+    "counts = summary_stats['count'].values\n",
+    "axes[1].bar(x_pos, counts, color=['#3498db', '#e74c3c'], alpha=0.8)\n",
+    "axes[1].set_title('Sample Sizes', fontsize=14, fontweight='bold')\n",
+    "axes[1].set_ylabel('Number of Users')\n",
+    "axes[1].set_xticks(x_pos)\n",
+    "axes[1].set_xticklabels(['Control', 'Treatment'])\n",
+    "\n",
+    "# Add count labels\n",
+    "for i, count in enumerate(counts):\n",
+    "    axes[1].text(i, count + 500, f'{count:,}', ha='center', va='bottom', fontweight='bold')\n",
+    "\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Business Recommendations {#recommendations}\n",
+    "\n",
+    "Based on the statistical analysis, let's generate actionable business recommendations."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Generate business recommendations\n",
+    "analyzer.business_recommendations(results)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 6. Key Takeaways {#takeaways}\n",
+    "\n",
+    "### Statistical Findings:\n",
+    "- **Overall Effect**: [Describe the overall treatment effect]\n",
+    "- **Statistical Significance**: [Whether the results are statistically significant]\n",
+    "- **Effect Size**: [Practical significance of the observed effect]\n",
+    "- **Country Variations**: [How effects differ across countries]\n",
+    "\n",
+    "### Business Impact:\n",
+    "- **Revenue Impact**: [Projected change in conversions/revenue]\n",
+    "- **Risk Assessment**: [Potential risks of launching or not launching]\n",
+    "- **Implementation Timeline**: [Recommended next steps and timeline]\n",
+    "\n",
+    "### Next Steps:\n",
+    "1. [Immediate actions required]\n",
+    "2. [Follow-up experiments or analyses]\n",
+    "3. [Monitoring and measurement plan]\"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Calculate additional business metrics\n",
+    "total_users = len(analyzer.data)\n",
+    "current_conversions = analyzer.data['converted'].sum()\n",
+    "current_rate = current_conversions / total_users\n",
+    "\n",
+    "treatment_rate = results['overall']['treatment_rate']\n",
+    "projected_conversions = total_users * treatment_rate\n",
+    "conversion_change = projected_conversions - current_conversions\n",
+    "\n",
+    "print(f\"Business Impact Summary:\")\n",
+    "print(f\"========================\")\n",
+    "print(f\"Total Users in Test: {total_users:,}\")\n",
+    "print(f\"Current Conversions: {current_conversions:,} ({current_rate:.3f} rate)\")\n",
+    "print(f\"Projected Conversions (if launched): {projected_conversions:,.0f}\")\n",
+    "print(f\"Net Change: {conversion_change:+,.0f} conversions\")\n",
+    "print(f\"Relative Change: {(conversion_change/current_conversions)*100:+.1f}%\")\n",
+    "\n",
+    "# Confidence interval for business impact\n",
+    "ci_low = results['overall']['ci_low']\n",
+    "ci_high = results['overall']['ci_high']\n",
+    "ci_low_conversions = ci_low * total_users\n",
+    "ci_high_conversions = ci_high * total_users\n",
+    "\n",
+    "print(f\"\\n95% Confidence Interval for Impact:\")\n",
+    "print(f\"Best case: +{ci_high_conversions:,.0f} conversions\")\n",
+    "print(f\"Worst case: {ci_low_conversions:+,.0f} conversions\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Appendix: Advanced Analysis\n",
+    "\n",
+    "### Segment Analysis\n",
+    "For more sophisticated analysis, you might want to examine:\n",
+    "- Device type effects\n",
+    "- Time-based patterns\n",
+    "- User cohort analysis\n",
+    "- Traffic source segmentation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Example: Time-based analysis\n",
+    "analyzer.data['date'] = pd.to_datetime(analyzer.data['timestamp']).dt.date\n",
+    "daily_conversions = analyzer.data.groupby(['date', 'con_treat'])['converted'].agg(['mean', 'count']).reset_index()\n",
+    "\n",
+    "# Plot daily conversion rates\n",
+    "fig, ax = plt.subplots(figsize=(12, 6))\n",
+    "\n",
+    "control_daily = daily_conversions[daily_conversions['con_treat'] == 'control']\n",
+    "treatment_daily = daily_conversions[daily_conversions['con_treat'] == 'treatment']\n",
+    "\n",
+    "ax.plot(control_daily['date'], control_daily[('mean', '')], 'o-', label='Control', alpha=0.7)\n",
+    "ax.plot(treatment_daily['date'], treatment_daily[('mean', '')], 'o-', label='Treatment', alpha=0.7)\n",
+    "\n",
+    "ax.set_title('Daily Conversion Rates Over Time')\n",
+    "ax.set_xlabel('Date')\n",
+    "ax.set_ylabel('Conversion Rate')\n",
+    "ax.legend()\n",
+    "ax.grid(True, alpha=0.3)\n",
+    "plt.xticks(rotation=45)\n",
+    "plt.tight_layout()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Summary\n",
+    "\n",
+    "This notebook demonstrated a complete A/B testing analysis workflow using the A/B Testing Framework. The analysis included:\n",
+    "\n",
+    "1. ✅ Data validation and quality checks\n",
+    "2. ✅ Comprehensive statistical testing\n",
+    "3. ✅ Power analysis\n",
+    "4. ✅ Multiple testing corrections\n",
+    "5. ✅ Business-focused recommendations\n",
+    "6. ✅ Rich visualizations\n",
+    "\n",
+    "The framework provides a robust foundation for making data-driven decisions about product changes and marketing experiments.\n",
+    "\n",
+    "---\n",
+    "\n",
+    "**Next Steps**: \n",
+    "- Implement the recommended changes\n",
+    "- Set up monitoring dashboards\n",
+    "- Plan follow-up experiments\n",
+    "- Document learnings for future tests"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
