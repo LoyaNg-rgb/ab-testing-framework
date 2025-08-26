@@ -4,7 +4,7 @@ ab-testing-framework/
 ├── setup.py
 ├── LICENSE
 ├── .gitignore
-├── improved_ab_test.py  # Your original analyzer
+├── improved_ab_test.py  
 ├── data/
 │   └── data_generator.py
 ├── notebooks/
