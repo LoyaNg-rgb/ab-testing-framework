@@ -303,7 +303,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**LoyaNg**
+**Loyanganba Ngathem**
 - GitHub: [@LoyaNg-rgb](https://github.com/LoyaNg-rgb)
 - LinkedIn: [Loyanganba Ngathem](https://www.linkedin.com/in/loyanganba-ngathem-315327378)
 
