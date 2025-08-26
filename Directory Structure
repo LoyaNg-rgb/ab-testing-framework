@@ -1,0 +1,19 @@
+ab-testing-framework/
+├── README.md
+├── requirements.txt
+├── setup.py
+├── LICENSE
+├── .gitignore
+├── improved_ab_test.py  # Your original analyzer
+├── data/
+│   └── data_generator.py
+├── notebooks/
+│   └── ab_testing_example.ipynb
+├── tests/
+│   └── test_analyzer.py
+├── examples/
+│   └── basic_usage.py
+├── .github/workflows/
+│   ├── ci.yml
+│   └── release.yml
+└── docs/
